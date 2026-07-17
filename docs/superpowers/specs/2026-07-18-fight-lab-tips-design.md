@@ -20,11 +20,12 @@ Seed content: the topic/concept list Yaniv has already drafted (general principl
 ## Architecture
 
 - **New standalone repo** (`fight-lab-tips`), React + Vite, deployed to its own GitHub Pages URL — mirrors the stack of the existing Fight Lab Trainer app so Yaniv's existing deploy workflow (`npm run deploy`) applies to app-code changes.
-- **Data store:** one Google Sheet, two tabs (`Tips`, `Publications`), acting purely as an invisible backing store. Yaniv never needs to open it — the app is the only interface for reading and writing data. It exists as an inspectable/exportable backup, not as a UI he manages.
-- **Reads:** the app fetches the Sheet's published data on load.
-- **Writes:** a single Google Apps Script Web App bound to the Sheet, exposing endpoints for: add idea, attach video to a tip, log a publish. One-time setup in Yaniv's Google account (~5 minutes, walked through, no coding needed from him).
+- **Data store:** Firebase Firestore — a real document database. One top-level collection (`tips`), with `publications` as a subcollection under each tip document. Free at this scale (Spark plan covers Phase 1's read/write volume with no billing needed).
+- **Reads/writes:** the React app talks to Firestore directly via the Firebase SDK. No separate write-API layer to build or deploy — removing the Apps Script middle-man Sheets would have needed. Data can update live in the app without a page reload.
+- **Access:** Firebase Authentication, a single email/password login (Yaniv's only). Firestore security rules restrict all reads/writes to that one authenticated account — this is real access control, not a speed bump, and replaces the earlier PIN-screen idea entirely.
 - **Video:** clips are uploaded to YouTube (unlisted for internal-library-only clips, or public/unlisted per platform norms when actually published — the "published" log entry captures wherever it actually lives).
-- **Access:** a simple PIN screen gates the whole app before load. Not real security — a speed bump against casual snooping, not a system to maintain.
+- **One-time setup:** create a free Firebase project, enable Firestore + email/password auth, create Yaniv's one login — walked through together, ~10 minutes, no ongoing maintenance.
+- **Cost note:** Phase 1 needs no billing. Phase 2's daily scheduled sync will likely require upgrading to Firebase's pay-as-you-go plan — usage at personal scale would cost close to nothing, but it does mean attaching a card when Phase 2 is actually built.
 
 ## Data model
 
@@ -32,30 +33,29 @@ Status is **derived**, never manually set, to avoid drift between reality and a 
 
 | Status | Rule |
 |---|---|
-| Idea | no `youtube_url` |
-| Filmed (and not published) | `youtube_url` set, zero `Publications` rows |
-| Published | `youtube_url` set, one or more `Publications` rows |
+| Idea | no `youtubeUrl` |
+| Filmed (and not published) | `youtubeUrl` set, zero documents in the `publications` subcollection |
+| Published | `youtubeUrl` set, one or more documents in `publications` |
 
-**Tips** (tab 1)
+**`tips` collection** — one document per tip
 | Field | Notes |
 |---|---|
-| id | row identifier |
+| id | Firestore document id |
 | title | concept/technique name (Hebrew) |
 | category | free text — open-ended, typed or picked from existing values, not a fixed enum |
-| tags | comma-separated technique tags, many-to-many by nature (one concept can tag multiple techniques) |
-| youtube_url | nullable until filmed |
+| tags | real array field, many-to-many by nature (one concept can tag multiple techniques) — no more comma-splitting a string |
+| youtubeUrl | nullable until filmed |
 | note | short one-line explanation |
-| date_added | |
-| date_filmed | nullable, set when `youtube_url` first attached |
+| dateAdded | |
+| dateFilmed | nullable, set when `youtubeUrl` first attached |
 
-**Publications** (tab 2) — one Tip can have many Publications (e.g. posted to Instagram today, TikTok next week)
+**`publications` subcollection** — nested under each `tips/{tipId}` document, one per platform post; no foreign key needed since it's already scoped to its parent tip
 | Field | Notes |
 |---|---|
-| id | |
-| tip_id | FK to Tips |
+| id | Firestore document id |
 | platform | YouTube / Instagram / Facebook / TikTok |
-| published_date | |
-| post_url | optional, link to the actual live post (needed later for Phase 2 engagement sync) |
+| publishedDate | |
+| postUrl | optional, link to the actual live post (needed later for Phase 2 engagement sync) |
 
 ## Screens
 
@@ -75,8 +75,8 @@ Daily automated engagement sync (likes/comments/views pulled from Instagram/Face
 
 ## Edge cases considered
 
-- **Re-filming a tip:** overwriting `youtube_url` is sufficient for v1; no version history of video links.
-- **Multiple publishes of the same tip:** supported natively via multiple `Publications` rows per `tip_id`.
+- **Re-filming a tip:** overwriting `youtubeUrl` is sufficient for v1; no version history of video links.
+- **Multiple publishes of the same tip:** supported natively via multiple documents in a tip's `publications` subcollection.
 - **Unlisted YouTube privacy:** anyone with the exact link can view — acceptable for internal clips, but not true privacy; flagged to Yaniv, not a security guarantee.
-- **PIN gate:** client-side only, deters casual browsing, not a real access control — acceptable given this is a personal tool with no sensitive data beyond training content.
+- **Firestore security rules:** must explicitly restrict all reads/writes to Yaniv's authenticated UID — an open/default-allow rule set would make the whole database publicly readable and writable. This is a real access-control point to get right during implementation, not an afterthought.
 - **Category sprawl:** open-ended categories mean typos could fragment the list (e.g. "שליטה ולחץ" vs "שליטה ולחץ "). Add-tip wizard should suggest/autocomplete from existing category values to reduce drift.
