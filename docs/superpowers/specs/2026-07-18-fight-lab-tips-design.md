@@ -73,6 +73,22 @@ Daily automated engagement sync (likes/comments/views pulled from Instagram/Face
 - May need a genuinely separate one-time API setup with Meta, which could involve app review delay — not something to design blind.
 - Will get its own spec once Phase 1 is live and access is confirmed.
 
+## Flagged, not scoped: automated cross-posting
+
+Publishing stays a **manual act** in this design (Yaniv posts via each platform's own app, then logs it in ours). Auto-publishing straight from the app — one tap to push a clip to Instagram/TikTok — was considered and is explicitly **not** part of any current phase. Real costs, checked directly against Meta/TikTok's current requirements:
+
+| Cost type | Instagram (Meta Content Publishing API) | TikTok (Content Posting API) |
+|---|---|---|
+| API usage fee | None — free at the platform level | None |
+| Approval process | Meta App Review + Business Verification (official business documents, tax paperwork), a recorded screencast showing the exact auth+publish flow, a hosted privacy policy | Manual audit, typically multiple feedback rounds, demo video/screenshots, hosted privacy policy |
+| Timeline | 2–4 weeks per review round; budget 6–8 weeks realistically | 2–6 weeks |
+| Until approved | N/A once live | Posts restricted to **private-only** visibility until the audit passes — useless for real publishing in the meantime |
+| Rate limits | ~25 posts/24hr per account (a non-issue at Yaniv's cadence) | ~15 posts/24hr per creator account |
+| Hidden infrastructure cost | Both APIs require the video at a plain public file URL — a YouTube watch link doesn't qualify. Would force raw video onto Firebase Storage (or similar) after all, reintroducing the storage/bandwidth cost Phase 1 deliberately avoided | Same |
+| Ongoing cost | Token refresh logic that must never silently break; Meta ships API changes quarterly, requiring periodic maintenance | Similar ongoing maintenance burden |
+
+**Recommendation: don't build this.** The entire task it would replace is a ~10-second manual tap to post from a phone's native app — the review timelines, paperwork, and ongoing maintenance cost badly outweigh the time saved for a solo user's posting cadence. Documented here so it's a deliberate skip, not an oversight — revisit only if publishing volume grows enough that the manual step becomes a genuine bottleneck.
+
 ## Edge cases considered
 
 - **Re-filming a tip:** overwriting `youtubeUrl` is sufficient for v1; no version history of video links.
