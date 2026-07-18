@@ -1,15 +1,17 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchTips } from '../lib/tips'
 
 export function useTips() {
   const [tips, setTips] = useState(undefined) // undefined = loading
   const [error, setError] = useState(null)
+  const requestIdRef = useRef(0)
 
   const reload = useCallback(() => {
+    const id = ++requestIdRef.current
     fetchTips()
-      .then(data => { setTips(data); setError(null) })
-      .catch(setError)
+      .then(data => { if (id === requestIdRef.current) { setTips(data); setError(null) } })
+      .catch(err => { if (id === requestIdRef.current) setError(err) })
   }, [])
 
   useEffect(() => {

@@ -64,4 +64,25 @@ describe('useTips', () => {
 
     await waitFor(() => expect(screen.getByText('1 tips')).toBeInTheDocument())
   })
+
+  it('ignores a stale reload response that resolves after a newer one', async () => {
+    let resolveFirst
+    const firstCall = new Promise(resolve => { resolveFirst = resolve })
+    mockFetchTips
+      .mockReturnValueOnce(firstCall) // first reload: slow, resolves later
+      .mockResolvedValueOnce([{ id: 'newer' }]) // second reload: fast, resolves first
+
+    render(<Probe />)
+    // trigger a second reload while the first is still pending
+    const reloadCallback = mockOn.mock.calls[0][2]
+    await reloadCallback()
+    await waitFor(() => expect(screen.getByText('1 tips')).toBeInTheDocument())
+
+    // now let the stale first request resolve late, with different (older) data
+    resolveFirst([{ id: 'older-1' }, { id: 'older-2' }])
+    await new Promise(r => setTimeout(r, 0))
+
+    // the stale response must NOT overwrite the newer result
+    expect(screen.getByText('1 tips')).toBeInTheDocument()
+  })
 })
