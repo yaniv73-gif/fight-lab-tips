@@ -59,7 +59,11 @@ Status is **derived**, never manually set, to avoid drift between reality and a 
 
 ## Screens
 
-1. **Browse / filter** — search bar + multi-select filter chips (category, technique tags, and status: idea=gray outline, filmed=black, published=brand red), results as a thumbnail grid. Multi-select chips chosen deliberately over single-category tabs because tags are many-to-many, not mutually exclusive.
+1. **Browse / filter** — search bar, then two visually and structurally separate filter groups, not one flat row:
+   - **Status** (its own labeled group: idea=gray outline, filmed=black, published=brand red) — a pipeline stage, not a content category.
+   - **Category & technique tags** (a separate labeled group, multi-select chips) — content classification, many-to-many by nature.
+
+   Results as a thumbnail grid. Multi-select chips chosen deliberately over single-category tabs for the category/tag group because tags are many-to-many, not mutually exclusive — but that reasoning doesn't extend to status, which is why status stays its own group rather than joining the same chip row.
 2. **Detail (full page)** — own URL/back button, not a modal, so a specific tip is shareable/bookmarkable. Shows embedded video (if filmed), title, tags, note, and publication history. Two contextual actions: "Mark as filmed" (opens video-link field, only shown for Idea-status tips) and "Log a publish" (platform, date, optional post link — only shown once filmed).
 3. **Add-tip wizard (3 steps)** — chosen over a single long form because this gets filled out often and repeatedly, and shorter focused screens beat one big scroll for a repeated task.
    - Step 1: **record now** (in-browser camera capture via `MediaRecorder`, then hand the clip to the phone's native Share sheet to finish uploading through the YouTube app — no API integration, no Google review), **paste an existing YouTube link**, or **skip entirely** (saves an Idea-only entry with no video, to be filmed later).
