@@ -40,4 +40,18 @@ describe('BrowsePage', () => {
     expect(screen.queryByText('קרוס פייס')).not.toBeInTheDocument()
     expect(screen.getByText('מרפק מעל כתף')).toBeInTheDocument()
   })
+
+  it('shows a retry button and calls reload when there is an error', async () => {
+    const mockReload = vi.fn()
+    mockUseTips.mockReturnValue({ tips: undefined, error: new Error('offline'), reload: mockReload })
+    render(<MemoryRouter><BrowsePage /></MemoryRouter>)
+    await userEvent.click(screen.getByRole('button', { name: 'נסה שוב' }))
+    expect(mockReload).toHaveBeenCalled()
+  })
+
+  it('shows an empty-state message when there are no tips yet', () => {
+    mockUseTips.mockReturnValue({ tips: [], error: null })
+    render(<MemoryRouter><BrowsePage /></MemoryRouter>)
+    expect(screen.getByText(/עדיין אין טיפים/)).toBeInTheDocument()
+  })
 })

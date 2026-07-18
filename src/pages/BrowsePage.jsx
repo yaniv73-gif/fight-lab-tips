@@ -7,7 +7,7 @@ import FilterBar from '../components/FilterBar'
 import TipCard from '../components/TipCard'
 
 export default function BrowsePage() {
-  const { tips, error } = useTips()
+  const { tips, error, reload } = useTips()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState(null)
   const [selectedCategories, setSelectedCategories] = useState([])
@@ -22,11 +22,16 @@ export default function BrowsePage() {
     [tips],
   )
 
-  function toggle(list, setList, value) {
-    setList(list.includes(value) ? list.filter(v => v !== value) : [...list, value])
+  function toggle(setList, value) {
+    setList(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
   }
 
-  if (error) return <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center text-red-400">שגיאה: {error.message}</div>
+  if (error) return (
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col items-center justify-center gap-4 text-red-400">
+      <div>שגיאה: {error.message}</div>
+      <button onClick={reload} className="bg-[#c7171a] text-white rounded-lg px-4 py-2 text-sm font-semibold">נסה שוב</button>
+    </div>
+  )
   if (tips === undefined) return <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center text-gray-500">טוען...</div>
 
   const visible = filterTips(tips, { search, status, categories: selectedCategories, tags: selectedTags })
@@ -45,6 +50,7 @@ export default function BrowsePage() {
 
       <input
         placeholder="חיפוש לפי שם או תג טכניקה..."
+        aria-label="חיפוש"
         value={search}
         onChange={e => setSearch(e.target.value)}
         className="mx-4 mb-3 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500"
@@ -57,14 +63,20 @@ export default function BrowsePage() {
         allCategories={allCategories}
         allTags={allTags}
         selectedCategories={selectedCategories}
-        onToggleCategory={cat => toggle(selectedCategories, setSelectedCategories, cat)}
+        onToggleCategory={cat => toggle(setSelectedCategories, cat)}
         selectedTags={selectedTags}
-        onToggleTag={tag => toggle(selectedTags, setSelectedTags, tag)}
+        onToggleTag={tag => toggle(setSelectedTags, tag)}
       />
 
-      <div className="grid grid-cols-2 gap-2.5 px-4 pb-6">
-        {visible.map(tip => <TipCard key={tip.id} tip={tip} />)}
-      </div>
+      {tips.length === 0 ? (
+        <div className="px-4 py-12 text-center text-gray-500 text-sm">
+          עדיין אין טיפים. לחץ על + כדי להוסיף את הראשון.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2.5 px-4 pb-6">
+          {visible.map(tip => <TipCard key={tip.id} tip={tip} />)}
+        </div>
+      )}
     </div>
   )
 }
