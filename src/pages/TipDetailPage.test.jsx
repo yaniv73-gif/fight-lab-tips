@@ -7,12 +7,21 @@ import TipDetailPage from './TipDetailPage'
 const mockUseTips = vi.fn()
 const mockAttachVideo = vi.fn()
 const mockAddPublication = vi.fn()
+const mockUpdateTip = vi.fn()
+const mockDeleteTip = vi.fn()
+const mockNavigate = vi.fn()
 
 vi.mock('../hooks/useTips', () => ({ useTips: () => mockUseTips() }))
 vi.mock('../lib/tips', () => ({
   attachVideo: (...args) => mockAttachVideo(...args),
   addPublication: (...args) => mockAddPublication(...args),
+  updateTip: (...args) => mockUpdateTip(...args),
+  deleteTip: (...args) => mockDeleteTip(...args),
 }))
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
 
 function renderAt(id, tips, extra = {}) {
   mockUseTips.mockReturnValue({ tips, error: null, reload: vi.fn(), ...extra })
@@ -30,8 +39,15 @@ const PUBLISHED_TIP = {
   publications: [{ id: 'p1', platform: 'Instagram', published_date: '2026-07-12T00:00:00Z', post_url: null }],
 }
 
+beforeEach(() => {
+  mockAttachVideo.mockReset()
+  mockAddPublication.mockReset()
+  mockUpdateTip.mockReset()
+  mockDeleteTip.mockReset()
+  mockNavigate.mockReset()
+})
+
 describe('TipDetailPage', () => {
-  beforeEach(() => { mockAttachVideo.mockReset(); mockAddPublication.mockReset() })
 
   it('shows a loading state while tips are undefined', () => {
     renderAt('1', undefined)
@@ -94,5 +110,87 @@ describe('TipDetailPage', () => {
     renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://example.com/not-youtube' }])
     expect(screen.queryByTitle('קרוס פייס')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /example\.com\/not-youtube/ })).toHaveAttribute('href', 'https://example.com/not-youtube')
+  })
+})
+
+describe('editing a tip', () => {
+  it('shows an edit form pre-filled with the tip\'s current values', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    expect(screen.getByDisplayValue('קרוס פייס')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('שליטה ולחץ')).toBeInTheDocument()
+  })
+
+  it('disables save until title and category are non-empty', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    const titleInput = screen.getByDisplayValue('קרוס פייס')
+    await userEvent.clear(titleInput)
+    expect(screen.getByRole('button', { name: /שמור/ })).toBeDisabled()
+  })
+
+  it('calls updateTip with the edited fields and reloads on success', async () => {
+    const mockReload = vi.fn()
+    mockUpdateTip.mockResolvedValue({ ...PUBLISHED_TIP, title: 'קרוס פייס מעודכן' })
+    renderAt('3', [PUBLISHED_TIP], { reload: mockReload })
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    const titleInput = screen.getByDisplayValue('קרוס פייס')
+    await userEvent.clear(titleInput)
+    await userEvent.type(titleInput, 'קרוס פייס מעודכן')
+    await userEvent.click(screen.getByRole('button', { name: /שמור/ }))
+    expect(mockUpdateTip).toHaveBeenCalledWith('3', expect.objectContaining({ title: 'קרוס פייס מעודכן' }))
+    expect(mockReload).toHaveBeenCalled()
+  })
+
+  it('cancels edit mode without saving', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    await userEvent.click(screen.getByRole('button', { name: 'ביטול' }))
+    expect(mockUpdateTip).not.toHaveBeenCalled()
+    expect(screen.getByText('קרוס פייס')).toBeInTheDocument()
+  })
+})
+
+describe('deleting a tip', () => {
+  it('shows a confirmation before deleting, not deleting on the first tap', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'מחק טיפ' }))
+    expect(mockDeleteTip).not.toHaveBeenCalled()
+    expect(screen.getByText(/בלתי הפיכה/)).toBeInTheDocument()
+  })
+
+  it('deletes and navigates to the browse list on confirmation', async () => {
+    mockDeleteTip.mockResolvedValue(undefined)
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'מחק טיפ' }))
+    await userEvent.click(screen.getByRole('button', { name: 'כן, מחק' }))
+    expect(mockDeleteTip).toHaveBeenCalledWith('3')
+    expect(mockNavigate).toHaveBeenCalledWith('/')
+  })
+
+  it('dismisses the confirmation without deleting when cancelled', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'מחק טיפ' }))
+    await userEvent.click(screen.getByRole('button', { name: 'ביטול' }))
+    expect(mockDeleteTip).not.toHaveBeenCalled()
+    expect(screen.queryByText(/בלתי הפיכה/)).not.toBeInTheDocument()
+  })
+})
+
+describe('cancelling inline forms', () => {
+  it('closes the mark-as-filmed form without calling attachVideo', async () => {
+    renderAt('1', [IDEA_TIP])
+    await userEvent.click(screen.getByRole('button', { name: /סמן כצולם/ }))
+    await userEvent.type(screen.getByPlaceholderText(/קישור/), 'https://youtu.be/typed')
+    await userEvent.click(screen.getByRole('button', { name: 'ביטול' }))
+    expect(mockAttachVideo).not.toHaveBeenCalled()
+    expect(screen.queryByPlaceholderText(/קישור/)).not.toBeInTheDocument()
+  })
+
+  it('closes the log-a-publish form without calling addPublication', async () => {
+    renderAt('2', [FILMED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: /רשום פרסום/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'ביטול' }))
+    expect(mockAddPublication).not.toHaveBeenCalled()
   })
 })
