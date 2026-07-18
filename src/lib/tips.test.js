@@ -93,13 +93,20 @@ describe('addPublication', () => {
 
 describe('updateTip', () => {
   it('updates the given fields and sets date_filmed when transitioning from no video to having one', async () => {
+    const mockFetchSingle = vi.fn().mockResolvedValue({ data: { youtube_url: null }, error: null })
+    const mockFetchEq = vi.fn().mockReturnValue({ single: mockFetchSingle })
+    const mockFetchSelect = vi.fn().mockReturnValue({ eq: mockFetchEq })
+
     mockSingle.mockResolvedValue({ data: { id: '1', youtube_url: 'https://youtu.be/new' }, error: null })
     mockSelect.mockReturnValue({ single: mockSingle })
     mockEq.mockReturnValue({ select: mockSelect })
     mockUpdate.mockReturnValue({ eq: mockEq })
-    mockFrom.mockReturnValue({ update: mockUpdate })
 
-    await updateTip('1', { title: 'קרוס פייס', category: 'שליטה ולחץ', tags: ['סייד'], note: '', youtube_url: 'https://youtu.be/new' }, null)
+    mockFrom
+      .mockReturnValueOnce({ select: mockFetchSelect })
+      .mockReturnValueOnce({ update: mockUpdate })
+
+    await updateTip('1', { title: 'קרוס פייס', category: 'שליטה ולחץ', tags: ['סייד'], note: '', youtube_url: 'https://youtu.be/new' })
 
     expect(mockFrom).toHaveBeenCalledWith('tips')
     const updateArg = mockUpdate.mock.calls[0][0]
@@ -108,26 +115,49 @@ describe('updateTip', () => {
   })
 
   it('does not touch date_filmed when the video link is changed but was already set', async () => {
+    const mockFetchSingle = vi.fn().mockResolvedValue({ data: { youtube_url: 'https://youtu.be/old' }, error: null })
+    const mockFetchEq = vi.fn().mockReturnValue({ single: mockFetchSingle })
+    const mockFetchSelect = vi.fn().mockReturnValue({ eq: mockFetchEq })
+
     mockSingle.mockResolvedValue({ data: { id: '1' }, error: null })
     mockSelect.mockReturnValue({ single: mockSingle })
     mockEq.mockReturnValue({ select: mockSelect })
     mockUpdate.mockReturnValue({ eq: mockEq })
-    mockFrom.mockReturnValue({ update: mockUpdate })
 
-    await updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: 'https://youtu.be/replaced' }, 'https://youtu.be/old')
+    mockFrom
+      .mockReturnValueOnce({ select: mockFetchSelect })
+      .mockReturnValueOnce({ update: mockUpdate })
+
+    await updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: 'https://youtu.be/replaced' })
 
     const updateArg = mockUpdate.mock.calls[0][0]
     expect(updateArg.date_filmed).toBeUndefined()
   })
 
-  it('throws when Supabase returns an error', async () => {
+  it('throws when the initial fetch fails', async () => {
+    const mockFetchSingle = vi.fn().mockResolvedValue({ data: null, error: new Error('fetch failed') })
+    const mockFetchEq = vi.fn().mockReturnValue({ single: mockFetchSingle })
+    const mockFetchSelect = vi.fn().mockReturnValue({ eq: mockFetchEq })
+    mockFrom.mockReturnValueOnce({ select: mockFetchSelect })
+
+    await expect(updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: null })).rejects.toThrow('fetch failed')
+  })
+
+  it('throws when the update itself fails', async () => {
+    const mockFetchSingle = vi.fn().mockResolvedValue({ data: { youtube_url: null }, error: null })
+    const mockFetchEq = vi.fn().mockReturnValue({ single: mockFetchSingle })
+    const mockFetchSelect = vi.fn().mockReturnValue({ eq: mockFetchEq })
+
     mockSingle.mockResolvedValue({ data: null, error: new Error('update failed') })
     mockSelect.mockReturnValue({ single: mockSingle })
     mockEq.mockReturnValue({ select: mockSelect })
     mockUpdate.mockReturnValue({ eq: mockEq })
-    mockFrom.mockReturnValue({ update: mockUpdate })
 
-    await expect(updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: null }, null)).rejects.toThrow('update failed')
+    mockFrom
+      .mockReturnValueOnce({ select: mockFetchSelect })
+      .mockReturnValueOnce({ update: mockUpdate })
+
+    await expect(updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: null })).rejects.toThrow('update failed')
   })
 })
 
