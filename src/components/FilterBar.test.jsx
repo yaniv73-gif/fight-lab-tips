@@ -44,4 +44,10 @@ describe('FilterBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'ארמבר' }))
     expect(props.onToggleTag).toHaveBeenCalledWith('ארמבר')
   })
+
+  it('marks the active status chip with aria-pressed', () => {
+    setup({ status: 'published' })
+    expect(screen.getByRole('button', { name: 'פורסם' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'רעיון' })).toHaveAttribute('aria-pressed', 'false')
+  })
 })
