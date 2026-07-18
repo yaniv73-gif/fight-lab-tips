@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createTip, attachVideo } from '../lib/tips'
+import RecordButton from '../components/RecordButton'
 
 export default function AddTipWizard() {
   const navigate = useNavigate()
@@ -35,7 +36,7 @@ export default function AddTipWizard() {
         {step === 1 && (
           <>
             <div className="text-xs text-gray-500 mb-4">שלב 1 מתוך 3 · וידאו</div>
-            {/* RecordButton slots in here in Task 14 */}
+            <RecordButton />
             <div className="text-xs text-gray-500 mb-3">ההקלטה תישלח דרך שיתוף אל אפליקציית YouTube להעלאה</div>
             <div className="text-xs text-gray-500 mb-1.5">או הדבק קישור YouTube קיים</div>
             <input
