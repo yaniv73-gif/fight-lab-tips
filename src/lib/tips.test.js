@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchTips, createTip, attachVideo, addPublication } from './tips'
+import { fetchTips, createTip, attachVideo, addPublication, updateTip, deleteTip } from './tips'
 
 const mockSelect = vi.fn()
 const mockOrder = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockDelete = vi.fn()
 const mockEq = vi.fn()
 const mockSingle = vi.fn()
 const mockFrom = vi.fn()
@@ -15,7 +16,7 @@ vi.mock('./supabase', () => ({
 
 beforeEach(() => {
   mockSelect.mockReset(); mockOrder.mockReset(); mockInsert.mockReset()
-  mockUpdate.mockReset(); mockEq.mockReset(); mockSingle.mockReset(); mockFrom.mockReset()
+  mockUpdate.mockReset(); mockDelete.mockReset(); mockEq.mockReset(); mockSingle.mockReset(); mockFrom.mockReset()
 })
 
 describe('fetchTips', () => {
@@ -87,5 +88,66 @@ describe('addPublication', () => {
     expect(mockFrom).toHaveBeenCalledWith('publications')
     expect(mockInsert).toHaveBeenCalledWith({ tip_id: '2', platform: 'Instagram', post_url: 'https://instagram.com/p/abc' })
     expect(result.platform).toBe('Instagram')
+  })
+})
+
+describe('updateTip', () => {
+  it('updates the given fields and sets date_filmed when transitioning from no video to having one', async () => {
+    mockSingle.mockResolvedValue({ data: { id: '1', youtube_url: 'https://youtu.be/new' }, error: null })
+    mockSelect.mockReturnValue({ single: mockSingle })
+    mockEq.mockReturnValue({ select: mockSelect })
+    mockUpdate.mockReturnValue({ eq: mockEq })
+    mockFrom.mockReturnValue({ update: mockUpdate })
+
+    await updateTip('1', { title: 'קרוס פייס', category: 'שליטה ולחץ', tags: ['סייד'], note: '', youtube_url: 'https://youtu.be/new' }, null)
+
+    expect(mockFrom).toHaveBeenCalledWith('tips')
+    const updateArg = mockUpdate.mock.calls[0][0]
+    expect(updateArg).toMatchObject({ title: 'קרוס פייס', category: 'שליטה ולחץ', tags: ['סייד'], note: '', youtube_url: 'https://youtu.be/new' })
+    expect(updateArg.date_filmed).toEqual(expect.any(String))
+  })
+
+  it('does not touch date_filmed when the video link is changed but was already set', async () => {
+    mockSingle.mockResolvedValue({ data: { id: '1' }, error: null })
+    mockSelect.mockReturnValue({ single: mockSingle })
+    mockEq.mockReturnValue({ select: mockSelect })
+    mockUpdate.mockReturnValue({ eq: mockEq })
+    mockFrom.mockReturnValue({ update: mockUpdate })
+
+    await updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: 'https://youtu.be/replaced' }, 'https://youtu.be/old')
+
+    const updateArg = mockUpdate.mock.calls[0][0]
+    expect(updateArg.date_filmed).toBeUndefined()
+  })
+
+  it('throws when Supabase returns an error', async () => {
+    mockSingle.mockResolvedValue({ data: null, error: new Error('update failed') })
+    mockSelect.mockReturnValue({ single: mockSingle })
+    mockEq.mockReturnValue({ select: mockSelect })
+    mockUpdate.mockReturnValue({ eq: mockEq })
+    mockFrom.mockReturnValue({ update: mockUpdate })
+
+    await expect(updateTip('1', { title: 'x', category: 'y', tags: [], note: '', youtube_url: null }, null)).rejects.toThrow('update failed')
+  })
+})
+
+describe('deleteTip', () => {
+  it('deletes the tip by id', async () => {
+    mockEq.mockResolvedValue({ error: null })
+    mockDelete.mockReturnValue({ eq: mockEq })
+    mockFrom.mockReturnValue({ delete: mockDelete })
+
+    await deleteTip('1')
+
+    expect(mockFrom).toHaveBeenCalledWith('tips')
+    expect(mockEq).toHaveBeenCalledWith('id', '1')
+  })
+
+  it('throws when Supabase returns an error', async () => {
+    mockEq.mockResolvedValue({ error: new Error('delete failed') })
+    mockDelete.mockReturnValue({ eq: mockEq })
+    mockFrom.mockReturnValue({ delete: mockDelete })
+
+    await expect(deleteTip('1')).rejects.toThrow('delete failed')
   })
 })

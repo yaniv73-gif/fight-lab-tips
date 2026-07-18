@@ -39,3 +39,26 @@ export async function addPublication(tipId, { platform, postUrl = null }) {
   if (error) throw error
   return data
 }
+
+export async function updateTip(id, { title, category, tags, note, youtube_url }, previousYoutubeUrl) {
+  const fields = { title, category, tags, note, youtube_url }
+  if (!previousYoutubeUrl && youtube_url) {
+    fields.date_filmed = new Date().toISOString()
+  }
+  const { data, error } = await supabase
+    .from('tips')
+    .update(fields)
+    .eq('id', id)
+    .select('*, publications(*)')
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteTip(id) {
+  const { error } = await supabase
+    .from('tips')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
