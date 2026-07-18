@@ -69,4 +69,28 @@ describe('AddTipWizard', () => {
 
     expect(mockCreateTip).toHaveBeenCalledWith(expect.objectContaining({ youtube_url: 'https://youtu.be/abc' }))
   })
+
+  it('disables the step 2 next button until title and category are both filled', async () => {
+    render(<MemoryRouter><AddTipWizard /></MemoryRouter>)
+    await user.click(screen.getByRole('button', { name: 'דלג' }))
+    expect(screen.getByRole('button', { name: 'הבא' })).toBeDisabled()
+    await user.type(screen.getByPlaceholderText(/לדוגמה: קרוס פייס/), 'קרוס פייס')
+    expect(screen.getByRole('button', { name: 'הבא' })).toBeDisabled()
+    await user.type(screen.getByPlaceholderText(/קטגוריה/), 'שליטה ולחץ')
+    expect(screen.getByRole('button', { name: 'הבא' })).not.toBeDisabled()
+  })
+
+  it('disables save while saving and shows an error message if createTip fails', async () => {
+    let rejectSave
+    mockCreateTip.mockReturnValue(new Promise((_resolve, reject) => { rejectSave = reject }))
+    await goToStep3(user)
+    await user.type(screen.getByPlaceholderText(/תגי טכניקות/), 'ארמבר')
+    await user.click(screen.getByRole('button', { name: 'שמור' }))
+
+    expect(screen.getByRole('button', { name: 'שומר...' })).toBeDisabled()
+
+    rejectSave(new Error('נכשל'))
+    expect(await screen.findByText('נכשל')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'שמור' })).not.toBeDisabled()
+  })
 })

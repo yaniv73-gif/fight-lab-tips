@@ -10,11 +10,21 @@ export default function AddTipWizard() {
   const [category, setCategory] = useState('')
   const [tagsInput, setTagsInput] = useState('')
   const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   async function handleSave() {
+    if (saving) return
+    setSaveError('')
+    setSaving(true)
     const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean)
-    const tip = await createTip({ title, category, tags, note, youtube_url: youtubeUrl || null })
-    navigate(`/tips/${tip.id}`)
+    try {
+      const tip = await createTip({ title, category, tags, note, youtube_url: youtubeUrl || null })
+      navigate(`/tips/${tip.id}`)
+    } catch (err) {
+      setSaveError(err.message)
+      setSaving(false)
+    }
   }
 
   return (
@@ -58,7 +68,13 @@ export default function AddTipWizard() {
             />
             <div className="flex gap-2">
               <button onClick={() => setStep(1)} className="flex-1 border border-gray-700 rounded-lg py-3 text-sm">חזרה</button>
-              <button onClick={() => setStep(3)} className="flex-[2] bg-[#c7171a] rounded-lg py-3 font-semibold">הבא</button>
+              <button
+                onClick={() => setStep(3)}
+                disabled={!title.trim() || !category.trim()}
+                className="flex-[2] bg-[#c7171a] rounded-lg py-3 font-semibold disabled:opacity-50"
+              >
+                הבא
+              </button>
             </div>
           </>
         )}
@@ -78,9 +94,12 @@ export default function AddTipWizard() {
               onChange={e => setNote(e.target.value)}
               className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm mb-4 placeholder:text-gray-500"
             />
+            {saveError && <p className="text-red-400 text-sm mb-3">{saveError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setStep(2)} className="flex-1 border border-gray-700 rounded-lg py-3 text-sm">חזרה</button>
-              <button onClick={handleSave} className="flex-[2] bg-[#c7171a] rounded-lg py-3 font-semibold">שמור</button>
+              <button onClick={() => setStep(2)} className="flex-1 border border-gray-700 rounded-lg py-3 text-sm" disabled={saving}>חזרה</button>
+              <button onClick={handleSave} disabled={saving} className="flex-[2] bg-[#c7171a] rounded-lg py-3 font-semibold disabled:opacity-50">
+                {saving ? 'שומר...' : 'שמור'}
+              </button>
             </div>
           </>
         )}
