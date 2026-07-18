@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createTip, attachVideo } from '../lib/tips'
+import { createTip } from '../lib/tips'
 import RecordButton from '../components/RecordButton'
 
 export default function AddTipWizard() {
