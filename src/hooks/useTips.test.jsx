@@ -51,4 +51,17 @@ describe('useTips', () => {
     expect(mockOn).toHaveBeenCalledWith('postgres_changes', { event: '*', schema: 'public', table: 'tips' }, expect.any(Function))
     expect(mockOn).toHaveBeenCalledWith('postgres_changes', { event: '*', schema: 'public', table: 'publications' }, expect.any(Function))
   })
+
+  it('clears a previous error once a later reload succeeds', async () => {
+    mockFetchTips.mockRejectedValueOnce(new Error('offline'))
+    render(<Probe />)
+    await waitFor(() => expect(screen.getByText('error: offline')).toBeInTheDocument())
+
+    mockFetchTips.mockResolvedValueOnce([{ id: '1' }])
+    // simulate the realtime subscription firing and triggering another reload
+    const reloadCallback = mockOn.mock.calls[0][2]
+    await reloadCallback()
+
+    await waitFor(() => expect(screen.getByText('1 tips')).toBeInTheDocument())
+  })
 })

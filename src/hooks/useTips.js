@@ -7,7 +7,9 @@ export function useTips() {
   const [error, setError] = useState(null)
 
   const reload = useCallback(() => {
-    fetchTips().then(setTips).catch(setError)
+    fetchTips()
+      .then(data => { setTips(data); setError(null) })
+      .catch(setError)
   }, [])
 
   useEffect(() => {
