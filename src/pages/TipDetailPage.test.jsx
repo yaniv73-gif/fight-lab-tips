@@ -89,4 +89,10 @@ describe('TipDetailPage', () => {
     renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://www.youtube.com/watch?v=xyz789' }])
     expect(screen.getByTitle('קרוס פייס')).toHaveAttribute('src', 'https://www.youtube.com/embed/xyz789')
   })
+
+  it('shows a plain link instead of an iframe for an unrecognized video URL', () => {
+    renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://example.com/not-youtube' }])
+    expect(screen.queryByTitle('קרוס פייס')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /example\.com\/not-youtube/ })).toHaveAttribute('href', 'https://example.com/not-youtube')
+  })
 })

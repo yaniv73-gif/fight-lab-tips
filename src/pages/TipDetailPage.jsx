@@ -12,7 +12,7 @@ function toEmbedUrl(url) {
   if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`
   const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
   if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`
-  return url
+  return null
 }
 
 export default function TipDetailPage() {
@@ -55,16 +55,18 @@ export default function TipDetailPage() {
         <ArrowRight className="w-4 h-4" /> חזרה לרשימה
       </button>
 
-      {tip.youtube_url && (
-        <div className="mx-4 aspect-video bg-gray-900 rounded-xl overflow-hidden mb-4">
-          <iframe
-            className="w-full h-full"
-            src={toEmbedUrl(tip.youtube_url)}
-            title={tip.title}
-            allowFullScreen
-          />
-        </div>
-      )}
+      {tip.youtube_url && (() => {
+        const embedUrl = toEmbedUrl(tip.youtube_url)
+        return embedUrl ? (
+          <div className="mx-4 aspect-video bg-gray-900 rounded-xl overflow-hidden mb-4">
+            <iframe className="w-full h-full" src={embedUrl} title={tip.title} allowFullScreen />
+          </div>
+        ) : (
+          <a href={tip.youtube_url} target="_blank" rel="noopener noreferrer" className="mx-4 mb-4 block text-[#c7171a] text-sm underline">
+            פתח את הקישור: {tip.youtube_url}
+          </a>
+        )
+      })()}
 
       <div className="px-4">
         <div className="flex items-center justify-between mb-3">
