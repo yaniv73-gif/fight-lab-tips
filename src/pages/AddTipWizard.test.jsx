@@ -21,6 +21,7 @@ async function goToStep3(user, { withLink } = {}) {
   render(<MemoryRouter><AddTipWizard /></MemoryRouter>)
   if (withLink) {
     await user.type(screen.getByPlaceholderText(/הדבק קישור/), withLink)
+    await user.click(screen.getByRole('button', { name: 'הבא' }))
   } else {
     await user.click(screen.getByRole('button', { name: 'דלג' }))
   }
