@@ -20,12 +20,12 @@ Seed content: the topic/concept list Yaniv has already drafted (general principl
 ## Architecture
 
 - **New standalone repo** (`fight-lab-tips`), React + Vite, deployed to its own GitHub Pages URL — mirrors the stack of the existing Fight Lab Trainer app so Yaniv's existing deploy workflow (`npm run deploy`) applies to app-code changes.
-- **Data store:** Firebase Firestore — a real document database. One top-level collection (`tips`), with `publications` as a subcollection under each tip document. Free at this scale (Spark plan covers Phase 1's read/write volume with no billing needed).
-- **Reads/writes:** the React app talks to Firestore directly via the Firebase SDK. No separate write-API layer to build or deploy — removing the Apps Script middle-man Sheets would have needed. Data can update live in the app without a page reload.
-- **Access:** Firebase Authentication, a single email/password login (Yaniv's only). Firestore security rules restrict all reads/writes to that one authenticated account — this is real access control, not a speed bump, and replaces the earlier PIN-screen idea entirely.
+- **Data store:** Supabase (Postgres) — a real relational database, reusing the same platform Yaniv already runs for Fight Lab Trainer (separate project, not shared data). Two tables: `tips` and `publications` (a normal foreign key, `publications.tip_id → tips.id` — no subcollection workaround needed like Firestore would have required). Free tier covers Phase 1 easily.
+- **Reads/writes:** the React app talks to Supabase directly via the `@supabase/supabase-js` client (already a proven dependency from the trainer app). No separate write-API layer to build or deploy. Data can update live via Supabase's realtime subscriptions without a page reload.
+- **Access:** Supabase Auth, a single email/password login (Yaniv's only). Row Level Security (RLS) policies restrict all reads/writes to that one authenticated user — this is real access control, not a speed bump, and replaces the earlier PIN-screen idea entirely.
 - **Video:** clips are uploaded to YouTube (unlisted for internal-library-only clips, or public/unlisted per platform norms when actually published — the "published" log entry captures wherever it actually lives).
-- **One-time setup:** create a free Firebase project, enable Firestore + email/password auth, create Yaniv's one login — walked through together, ~10 minutes, no ongoing maintenance.
-- **Cost note:** Phase 1 needs no billing. Phase 2's daily scheduled sync will likely require upgrading to Firebase's pay-as-you-go plan — usage at personal scale would cost close to nothing, but it does mean attaching a card when Phase 2 is actually built.
+- **One-time setup:** create a new Supabase project (separate from the trainer app's project), enable email/password auth, create Yaniv's one login, write the RLS policies — walked through together, ~10 minutes, no ongoing maintenance.
+- **Cost note:** Phase 1 needs no billing — Supabase's free tier covers it. Phase 2's daily scheduled sync also needs no billing: Supabase's `pg_cron` extension runs scheduled jobs even on the free tier (unlike Firebase, which required a paid plan for this). One real caveat: free-tier projects auto-pause after 7 days of total inactivity — not a concern at Yaniv's regular usage pattern, but worth knowing if the app goes unused for a stretch.
 
 ## Data model
 
@@ -33,29 +33,30 @@ Status is **derived**, never manually set, to avoid drift between reality and a 
 
 | Status | Rule |
 |---|---|
-| Idea | no `youtubeUrl` |
-| Filmed (and not published) | `youtubeUrl` set, zero documents in the `publications` subcollection |
-| Published | `youtubeUrl` set, one or more documents in `publications` |
+| Idea | no `youtube_url` |
+| Filmed (and not published) | `youtube_url` set, zero rows in `publications` for this tip |
+| Published | `youtube_url` set, one or more rows in `publications` |
 
-**`tips` collection** — one document per tip
-| Field | Notes |
-|---|---|
-| id | Firestore document id |
-| title | concept/technique name (Hebrew) |
-| category | free text — open-ended, typed or picked from existing values, not a fixed enum |
-| tags | real array field, many-to-many by nature (one concept can tag multiple techniques) — no more comma-splitting a string |
-| youtubeUrl | nullable until filmed |
-| note | short one-line explanation |
-| dateAdded | |
-| dateFilmed | nullable, set when `youtubeUrl` first attached |
+**`tips` table** — one row per tip
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, primary key | |
+| title | text | concept/technique name (Hebrew) |
+| category | text | free text — open-ended, typed or picked from existing values, not a fixed enum |
+| tags | text[] | real Postgres array column, many-to-many by nature (one concept can tag multiple techniques) — no comma-splitting a string |
+| youtube_url | text, nullable | nullable until filmed |
+| note | text | short one-line explanation |
+| date_added | timestamptz | defaults to `now()` |
+| date_filmed | timestamptz, nullable | set when `youtube_url` first attached |
 
-**`publications` subcollection** — nested under each `tips/{tipId}` document, one per platform post; no foreign key needed since it's already scoped to its parent tip
-| Field | Notes |
-|---|---|
-| id | Firestore document id |
-| platform | YouTube / Instagram / Facebook / TikTok |
-| publishedDate | |
-| postUrl | optional, link to the actual live post (needed later for Phase 2 engagement sync) |
+**`publications` table** — one row per platform post, real foreign key back to its tip
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, primary key | |
+| tip_id | uuid, references `tips(id)` | standard FK — Postgres makes this the natural choice, no workaround needed |
+| platform | text | YouTube / Instagram / Facebook / TikTok |
+| published_date | timestamptz | |
+| post_url | text, nullable | optional, link to the actual live post (needed later for Phase 2 engagement sync) |
 
 ## Screens
 
@@ -88,7 +89,7 @@ Publishing stays a **manual act** in this design (Yaniv posts via each platform'
 | Timeline | 2–4 weeks per review round; budget 6–8 weeks realistically | 2–6 weeks |
 | Until approved | N/A once live | Posts restricted to **private-only** visibility until the audit passes — useless for real publishing in the meantime |
 | Rate limits | ~25 posts/24hr per account (a non-issue at Yaniv's cadence) | ~15 posts/24hr per creator account |
-| Hidden infrastructure cost | Both APIs require the video at a plain public file URL — a YouTube watch link doesn't qualify. Would force raw video onto Firebase Storage (or similar) after all, reintroducing the storage/bandwidth cost Phase 1 deliberately avoided | Same |
+| Hidden infrastructure cost | Both APIs require the video at a plain public file URL — a YouTube watch link doesn't qualify. Would force raw video onto paid file storage (Supabase Storage or similar) after all, reintroducing the storage/bandwidth cost Phase 1 deliberately avoided | Same |
 | Ongoing cost | Token refresh logic that must never silently break; Meta ships API changes quarterly, requiring periodic maintenance | Similar ongoing maintenance burden |
 
 **Recommendation: don't build this.** The entire task it would replace is a ~10-second manual tap to post from a phone's native app — the review timelines, paperwork, and ongoing maintenance cost badly outweigh the time saved for a solo user's posting cadence. Documented here so it's a deliberate skip, not an oversight — revisit only if publishing volume grows enough that the manual step becomes a genuine bottleneck.
@@ -97,9 +98,9 @@ Publishing stays a **manual act** in this design (Yaniv posts via each platform'
 
 ## Edge cases considered
 
-- **Re-filming a tip:** overwriting `youtubeUrl` is sufficient for v1; no version history of video links.
-- **Multiple publishes of the same tip:** supported natively via multiple documents in a tip's `publications` subcollection.
+- **Re-filming a tip:** overwriting `youtube_url` is sufficient for v1; no version history of video links.
+- **Multiple publishes of the same tip:** supported natively via multiple rows in `publications` sharing the same `tip_id`.
 - **Unlisted YouTube privacy:** anyone with the exact link can view — acceptable for internal clips, but not true privacy; flagged to Yaniv, not a security guarantee.
-- **Firestore security rules:** must explicitly restrict all reads/writes to Yaniv's authenticated UID — an open/default-allow rule set would make the whole database publicly readable and writable. This is a real access-control point to get right during implementation, not an afterthought.
+- **Row Level Security policies:** must explicitly restrict all reads/writes on both tables to Yaniv's authenticated user id — RLS is opt-in per table in Supabase, and a table left without policies enabled defaults to fully accessible via the API. This is a real access-control point to get right during implementation, not an afterthought.
 - **Category sprawl:** open-ended categories mean typos could fragment the list (e.g. "שליטה ולחץ" vs "שליטה ולחץ "). Add-tip wizard should suggest/autocomplete from existing category values to reduce drift.
 - **In-app recording browser support:** `MediaRecorder` + camera access is well-supported on Android Chrome (Yaniv's S23 Ultra) and on iOS Safari 14.5+. The recorded format (WebM on Chrome, MP4 on Safari) needs `MediaRecorder.isTypeSupported()` feature detection so the app picks a format the device can actually produce, rather than assuming one codec everywhere.
