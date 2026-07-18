@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { createTip } from '../lib/tips'
 import RecordButton from '../components/RecordButton'
 
@@ -31,7 +32,17 @@ export default function AddTipWizard() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white" dir="rtl">
       <div className="px-4 pt-4">
-        <div className="font-bold mb-1">טיפ חדש</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="font-bold">טיפ חדש</div>
+          <button
+            onClick={() => navigate('/')}
+            disabled={saving}
+            aria-label="סגור וחזור לדשבורד"
+            className="p-1 text-gray-400 disabled:opacity-50"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
         {step === 1 && (
           <>

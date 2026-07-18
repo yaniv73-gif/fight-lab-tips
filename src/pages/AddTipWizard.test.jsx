@@ -93,4 +93,34 @@ describe('AddTipWizard', () => {
     expect(await screen.findByText('נכשל')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'שמור' })).not.toBeDisabled()
   })
+
+  it('shows an exit button on every step that navigates to the dashboard', async () => {
+    render(<MemoryRouter><AddTipWizard /></MemoryRouter>)
+    expect(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'דלג' }))
+    expect(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' })).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText(/לדוגמה: קרוס פייס/), 'x')
+    await user.type(screen.getByPlaceholderText(/קטגוריה/), 'y')
+    await user.click(screen.getByRole('button', { name: 'הבא' }))
+    expect(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' })).toBeInTheDocument()
+  })
+
+  it('navigates to the dashboard when the exit button is clicked, without saving', async () => {
+    render(<MemoryRouter><AddTipWizard /></MemoryRouter>)
+    await user.click(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' }))
+    expect(mockNavigate).toHaveBeenCalledWith('/')
+    expect(mockCreateTip).not.toHaveBeenCalled()
+  })
+
+  it('disables the exit button while a save is in flight', async () => {
+    let resolveSave
+    mockCreateTip.mockReturnValue(new Promise(resolve => { resolveSave = resolve }))
+    await goToStep3(user)
+    await user.type(screen.getByPlaceholderText(/תגי טכניקות/), 'ארמבר')
+    await user.click(screen.getByRole('button', { name: /שמור/ }))
+    expect(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' })).toBeDisabled()
+    resolveSave({ id: 'new-1' })
+  })
 })
