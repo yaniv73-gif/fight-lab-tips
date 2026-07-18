@@ -62,7 +62,7 @@ Status is **derived**, never manually set, to avoid drift between reality and a 
 1. **Browse / filter** — search bar + multi-select filter chips (category, technique tags, and status: idea=gray outline, filmed=black, published=brand red), results as a thumbnail grid. Multi-select chips chosen deliberately over single-category tabs because tags are many-to-many, not mutually exclusive.
 2. **Detail (full page)** — own URL/back button, not a modal, so a specific tip is shareable/bookmarkable. Shows embedded video (if filmed), title, tags, note, and publication history. Two contextual actions: "Mark as filmed" (opens video-link field, only shown for Idea-status tips) and "Log a publish" (platform, date, optional post link — only shown once filmed).
 3. **Add-tip wizard (3 steps)** — chosen over a single long form because this gets filled out often and repeatedly, and shorter focused screens beat one big scroll for a repeated task.
-   - Step 1: paste YouTube link (**skippable** — skipping saves an Idea-only entry with no video, to be filmed later).
+   - Step 1: **record now** (in-browser camera capture via `MediaRecorder`, then hand the clip to the phone's native Share sheet to finish uploading through the YouTube app — no API integration, no Google review), **paste an existing YouTube link**, or **skip entirely** (saves an Idea-only entry with no video, to be filmed later).
    - Step 2: title + category (type new or pick existing).
    - Step 3: technique tags + short note → save.
 
@@ -89,6 +89,8 @@ Publishing stays a **manual act** in this design (Yaniv posts via each platform'
 
 **Recommendation: don't build this.** The entire task it would replace is a ~10-second manual tap to post from a phone's native app — the review timelines, paperwork, and ongoing maintenance cost badly outweigh the time saved for a solo user's posting cadence. Documented here so it's a deliberate skip, not an oversight — revisit only if publishing volume grows enough that the manual step becomes a genuine bottleneck.
 
+**Related, same reasoning: no direct API auto-upload to YouTube either.** In-app camera recording (Step 1 of the add-tip wizard) is in scope — but automatically pushing that recording straight onto YouTube as unlisted via the YouTube Data API is not. Google restricts unverified apps to **private-only** uploads (not unlisted/public); getting real unlisted upload access requires passing Google's own compliance audit (demo video, ToS agreement, review) — a real process, in the same category of cost as the Meta/TikTok audits above, just lighter weight. Instead, the recorded clip is handed to the phone's native Share sheet to finish uploading through the YouTube app itself (one tap, no API, no audit) — Yaniv pastes the resulting link back into the wizard exactly as if he'd filmed with the native camera app.
+
 ## Edge cases considered
 
 - **Re-filming a tip:** overwriting `youtubeUrl` is sufficient for v1; no version history of video links.
@@ -96,3 +98,4 @@ Publishing stays a **manual act** in this design (Yaniv posts via each platform'
 - **Unlisted YouTube privacy:** anyone with the exact link can view — acceptable for internal clips, but not true privacy; flagged to Yaniv, not a security guarantee.
 - **Firestore security rules:** must explicitly restrict all reads/writes to Yaniv's authenticated UID — an open/default-allow rule set would make the whole database publicly readable and writable. This is a real access-control point to get right during implementation, not an afterthought.
 - **Category sprawl:** open-ended categories mean typos could fragment the list (e.g. "שליטה ולחץ" vs "שליטה ולחץ "). Add-tip wizard should suggest/autocomplete from existing category values to reduce drift.
+- **In-app recording browser support:** `MediaRecorder` + camera access is well-supported on Android Chrome (Yaniv's S23 Ultra) and on iOS Safari 14.5+. The recorded format (WebM on Chrome, MP4 on Safari) needs `MediaRecorder.isTypeSupported()` feature detection so the app picks a format the device can actually produce, rather than assuming one codec everywhere.
