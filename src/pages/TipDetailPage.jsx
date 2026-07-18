@@ -117,6 +117,10 @@ export default function TipDetailPage() {
 
   async function handleSaveEdit() {
     if (saving) return
+    if (!editYoutubeUrl.trim() && tip.publications.length > 0) {
+      setSaveError('לא ניתן להסיר את קישור הווידאו מטיפ שכבר פורסם.')
+      return
+    }
     setSaveError('')
     setSaving(true)
     const tags = editTagsInput.split(',').map(t => t.trim()).filter(Boolean)
@@ -236,7 +240,7 @@ export default function TipDetailPage() {
           </div>
         )}
 
-        {tip.publications.length > 0 && (
+        {!showEdit && tip.publications.length > 0 && (
           <div className="mb-5">
             <div className="text-[11px] uppercase tracking-wide text-gray-500 mb-2">היסטוריית פרסום</div>
             {tip.publications.map(pub => (
@@ -248,13 +252,13 @@ export default function TipDetailPage() {
           </div>
         )}
 
-        {status === 'idea' && !showVideoForm && (
+        {!showEdit && status === 'idea' && !showVideoForm && (
           <button onClick={openVideoForm} className="w-full bg-[#c7171a] font-semibold rounded-lg py-3">
             סמן כצולם
           </button>
         )}
 
-        {showVideoForm && (
+        {!showEdit && showVideoForm && (
           <div className="flex flex-col gap-2">
             <input
               placeholder="הדבק קישור YouTube"
@@ -269,13 +273,13 @@ export default function TipDetailPage() {
           </div>
         )}
 
-        {status !== 'idea' && !showPublishForm && (
+        {!showEdit && status !== 'idea' && !showPublishForm && (
           <button onClick={openPublishForm} className="w-full bg-[#c7171a] font-semibold rounded-lg py-3">
             רשום פרסום נוסף
           </button>
         )}
 
-        {showPublishForm && (
+        {!showEdit && showPublishForm && (
           <div className="flex flex-col gap-2">
             <div className="flex gap-2 flex-wrap">
               {PLATFORMS.map(platform => (
@@ -292,19 +296,19 @@ export default function TipDetailPage() {
           </div>
         )}
 
-        {!showDeleteConfirm && (
+        {!showEdit && !showDeleteConfirm && (
           <button onClick={openDeleteConfirm} className="w-full mt-4 border border-red-900 text-red-400 rounded-lg py-3 text-sm">
             מחק טיפ
           </button>
         )}
 
-        {showDeleteConfirm && (
+        {!showEdit && showDeleteConfirm && (
           <div className="mt-4 border border-red-900 rounded-lg p-4">
             <p className="text-sm text-red-400 mb-3">למחוק את הטיפ? פעולה זו בלתי הפיכה</p>
             {deleteError && <p className="text-red-400 text-sm mb-3">{deleteError}</p>}
             <div className="flex gap-2">
               <button onClick={cancelDeleteConfirm} disabled={deleting} className="flex-1 border border-gray-700 rounded-lg py-3 text-sm">ביטול</button>
-              <button onClick={handleDelete} disabled={deleting} className="flex-[2] bg-red-700 rounded-lg py-3 font-semibold disabled:opacity-50">
+              <button onClick={handleDelete} disabled={deleting} className="flex-[2] bg-[#c7171a] rounded-lg py-3 font-semibold disabled:opacity-50">
                 {deleting ? 'מוחק...' : 'כן, מחק'}
               </button>
             </div>

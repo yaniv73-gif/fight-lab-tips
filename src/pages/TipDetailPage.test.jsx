@@ -149,6 +149,23 @@ describe('editing a tip', () => {
     expect(mockUpdateTip).not.toHaveBeenCalled()
     expect(screen.getByText('קרוס פייס')).toBeInTheDocument()
   })
+
+  it('blocks clearing the video link on a tip that already has publications', async () => {
+    renderAt('3', [PUBLISHED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    const urlInput = screen.getByDisplayValue('https://youtu.be/y')
+    await userEvent.clear(urlInput)
+    await userEvent.click(screen.getByRole('button', { name: /שמור/ }))
+    expect(mockUpdateTip).not.toHaveBeenCalled()
+    expect(screen.getByText(/לא ניתן להסיר/)).toBeInTheDocument()
+  })
+
+  it('hides the other action buttons while editing', async () => {
+    renderAt('2', [FILMED_TIP])
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }))
+    expect(screen.queryByRole('button', { name: 'מחק טיפ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /רשום פרסום/ })).not.toBeInTheDocument()
+  })
 })
 
 describe('deleting a tip', () => {
