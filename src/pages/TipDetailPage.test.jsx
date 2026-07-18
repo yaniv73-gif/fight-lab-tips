@@ -79,4 +79,14 @@ describe('TipDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'TikTok' }))
     expect(mockAddPublication).toHaveBeenCalledWith('2', { platform: 'TikTok', postUrl: null })
   })
+
+  it('embeds a youtu.be short link correctly', () => {
+    renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://youtu.be/abc123' }])
+    expect(screen.getByTitle('קרוס פייס')).toHaveAttribute('src', 'https://www.youtube.com/embed/abc123')
+  })
+
+  it('embeds a youtube.com/watch?v= link correctly', () => {
+    renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://www.youtube.com/watch?v=xyz789' }])
+    expect(screen.getByTitle('קרוס פייס')).toHaveAttribute('src', 'https://www.youtube.com/embed/xyz789')
+  })
 })

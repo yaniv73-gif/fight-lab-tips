@@ -7,6 +7,14 @@ import { deriveStatus, STATUS_LABELS } from '../lib/tipStatus'
 
 const PLATFORMS = ['YouTube', 'Instagram', 'Facebook', 'TikTok']
 
+function toEmbedUrl(url) {
+  const watchMatch = url.match(/[?&]v=([^&]+)/)
+  if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`
+  const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
+  if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`
+  return url
+}
+
 export default function TipDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -51,7 +59,7 @@ export default function TipDetailPage() {
         <div className="mx-4 aspect-video bg-gray-900 rounded-xl overflow-hidden mb-4">
           <iframe
             className="w-full h-full"
-            src={tip.youtube_url.replace('watch?v=', 'embed/')}
+            src={toEmbedUrl(tip.youtube_url)}
             title={tip.title}
             allowFullScreen
           />
