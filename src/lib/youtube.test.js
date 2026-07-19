@@ -40,6 +40,10 @@ describe('getYoutubeVideoId', () => {
     expect(getYoutubeVideoId('https://youtube.com/shorts/abc123/')).toBe('abc123')
     expect(getYoutubeVideoId('https://youtu.be/xyz789/')).toBe('xyz789')
   })
+
+  it('does not capture a trailing slash into the id for a watch URL', () => {
+    expect(getYoutubeVideoId('https://www.youtube.com/watch?v=normalId/')).toBe('normalId')
+  })
 })
 
 describe('getYoutubeThumbnail', () => {
