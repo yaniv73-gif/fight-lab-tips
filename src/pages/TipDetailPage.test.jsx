@@ -116,6 +116,12 @@ describe('TipDetailPage', () => {
     expect(screen.queryByTitle('קרוס פייס')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /example\.com\/not-youtube/ })).toHaveAttribute('href', 'https://example.com/not-youtube')
   })
+
+  it('embeds a YouTube Shorts link correctly', () => {
+    renderAt('3', [{ ...PUBLISHED_TIP, youtube_url: 'https://m.youtube.com/shorts/PerDYvq90Mc' }])
+    expect(screen.getByTitle('קרוס פייס')).toHaveAttribute('src', 'https://www.youtube.com/embed/PerDYvq90Mc')
+    expect(screen.queryByRole('link', { name: /shorts/ })).not.toBeInTheDocument()
+  })
 })
 
 describe('editing a tip', () => {

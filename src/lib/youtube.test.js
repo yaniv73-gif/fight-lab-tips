@@ -19,6 +19,18 @@ describe('getYoutubeVideoId', () => {
     expect(getYoutubeVideoId(null)).toBeNull()
     expect(getYoutubeVideoId('')).toBeNull()
   })
+
+  it('extracts the id from a YouTube Shorts link', () => {
+    expect(getYoutubeVideoId('https://youtube.com/shorts/PerDYvq90Mc')).toBe('PerDYvq90Mc')
+  })
+
+  it('extracts the id from a mobile YouTube Shorts link (m.youtube.com)', () => {
+    expect(getYoutubeVideoId('https://m.youtube.com/shorts/PerDYvq90Mc')).toBe('PerDYvq90Mc')
+  })
+
+  it('strips trailing query params from a Shorts link', () => {
+    expect(getYoutubeVideoId('https://youtube.com/shorts/PerDYvq90Mc?feature=share')).toBe('PerDYvq90Mc')
+  })
 })
 
 describe('getYoutubeThumbnail', () => {
@@ -27,5 +39,9 @@ describe('getYoutubeThumbnail', () => {
   })
   it('returns null for an unrecognized link', () => {
     expect(getYoutubeThumbnail('https://example.com/not-youtube')).toBeNull()
+  })
+
+  it('builds a thumbnail URL for a Shorts link', () => {
+    expect(getYoutubeThumbnail('https://m.youtube.com/shorts/PerDYvq90Mc')).toBe('https://i.ytimg.com/vi/PerDYvq90Mc/mqdefault.jpg')
   })
 })

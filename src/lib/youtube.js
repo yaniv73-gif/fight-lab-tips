@@ -4,6 +4,8 @@ export function getYoutubeVideoId(url) {
   if (watchMatch) return watchMatch[1]
   const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
   if (shortMatch) return shortMatch[1]
+  const shortsMatch = url.match(/youtube\.com\/shorts\/([^?&]+)/)
+  if (shortsMatch) return shortsMatch[1]
   return null
 }
 
