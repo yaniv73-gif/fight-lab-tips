@@ -41,7 +41,7 @@ describe('FilterBar', () => {
 
   it('calls onToggleTag when a tag chip is clicked', async () => {
     const props = setup()
-    await userEvent.click(screen.getByRole('button', { name: 'ארמבר' }))
+    await userEvent.click(screen.getByRole('button', { name: '#ארמבר' }))
     expect(props.onToggleTag).toHaveBeenCalledWith('ארמבר')
   })
 
@@ -49,5 +49,11 @@ describe('FilterBar', () => {
     setup({ status: 'published' })
     expect(screen.getByRole('button', { name: 'פורסם' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'רעיון' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('shows tag chips with a # prefix but leaves category chips unprefixed', () => {
+    setup()
+    expect(screen.getByRole('button', { name: 'שליטה ולחץ' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '#ארמבר' })).toBeInTheDocument()
   })
 })

@@ -51,7 +51,7 @@ export default function FilterBar({
           ))}
           {allTags.map(tag => (
             <Chip key={`tag-${tag}`} active={selectedTags.includes(tag)} onClick={() => onToggleTag(tag)}>
-              {tag}
+              {`#${tag}`}
             </Chip>
           ))}
         </div>
