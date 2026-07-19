@@ -31,6 +31,15 @@ describe('getYoutubeVideoId', () => {
   it('strips trailing query params from a Shorts link', () => {
     expect(getYoutubeVideoId('https://youtube.com/shorts/PerDYvq90Mc?feature=share')).toBe('PerDYvq90Mc')
   })
+
+  it('does not let a stray v= param in a Shorts URL override the shorts id', () => {
+    expect(getYoutubeVideoId('https://youtube.com/shorts/abc123?v=SHOULDNOTWIN')).toBe('abc123')
+  })
+
+  it('does not capture a trailing slash into the id', () => {
+    expect(getYoutubeVideoId('https://youtube.com/shorts/abc123/')).toBe('abc123')
+    expect(getYoutubeVideoId('https://youtu.be/xyz789/')).toBe('xyz789')
+  })
 })
 
 describe('getYoutubeThumbnail', () => {
