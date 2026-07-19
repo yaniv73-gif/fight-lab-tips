@@ -13,9 +13,9 @@ export default function TipCard({ tip }) {
   return (
     <Link to={`/tips/${tip.id}`} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden block">
       {status === 'idea' ? (
-        <div className="m-1.5 h-16 rounded-lg border border-dashed border-gray-700" />
+        <div className="m-1.5 aspect-video rounded-lg border border-dashed border-gray-700" />
       ) : (
-        <div className="h-20 bg-gray-800 flex items-center justify-center relative overflow-hidden">
+        <div className="aspect-video bg-gray-800 flex items-center justify-center relative overflow-hidden">
           {showThumbnail && (
             <img
               src={thumbnail}
