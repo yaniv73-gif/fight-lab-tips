@@ -35,7 +35,7 @@ export default function AddTipWizard() {
         <div className="flex items-center justify-between mb-1">
           <div className="font-bold">טיפ חדש</div>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/', { replace: true })}
             disabled={saving}
             aria-label="סגור וחזור לדשבורד"
             className="p-1 text-gray-400 disabled:opacity-50"

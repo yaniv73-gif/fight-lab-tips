@@ -110,7 +110,7 @@ describe('AddTipWizard', () => {
   it('navigates to the dashboard when the exit button is clicked, without saving', async () => {
     render(<MemoryRouter><AddTipWizard /></MemoryRouter>)
     await user.click(screen.getByRole('button', { name: 'סגור וחזור לדשבורד' }))
-    expect(mockNavigate).toHaveBeenCalledWith('/')
+    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
     expect(mockCreateTip).not.toHaveBeenCalled()
   })
 
