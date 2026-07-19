@@ -15,7 +15,7 @@ export default function TipCard({ tip }) {
       {status === 'idea' ? (
         <div className="m-1.5 aspect-video rounded-lg border border-dashed border-gray-700" />
       ) : (
-        <div className="aspect-video bg-gray-800 flex items-center justify-center relative overflow-hidden">
+        <div className="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
           {showThumbnail && (
             <img
               src={thumbnail}
