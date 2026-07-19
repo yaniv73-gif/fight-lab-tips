@@ -184,7 +184,7 @@ export default function TipDetailPage() {
 
             <div className="flex gap-1.5 flex-wrap mb-4">
               {tip.tags.map(tag => (
-                <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-gray-900 border border-gray-800 text-gray-400">{tag}</span>
+                <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-gray-900 border border-gray-800 text-gray-400">{`#${tag}`}</span>
               ))}
             </div>
 

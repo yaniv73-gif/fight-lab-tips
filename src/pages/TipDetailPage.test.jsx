@@ -79,6 +79,11 @@ describe('TipDetailPage', () => {
     expect(screen.getByText('Instagram')).toBeInTheDocument()
   })
 
+  it('shows tip tags with a # prefix, consistent with FilterBar', () => {
+    renderAt('3', [PUBLISHED_TIP])
+    expect(screen.getByText('#סייד')).toBeInTheDocument()
+  })
+
   it('calls attachVideo with the pasted link when marking an idea as filmed', async () => {
     mockAttachVideo.mockResolvedValue({ ...IDEA_TIP, youtube_url: 'https://youtu.be/new' })
     renderAt('1', [IDEA_TIP])
