@@ -2,16 +2,21 @@ import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import StatusBadge from './StatusBadge'
 import { deriveStatus } from '../lib/tipStatus'
+import { getYoutubeThumbnail } from '../lib/youtube'
 
 export default function TipCard({ tip }) {
   const status = deriveStatus(tip)
+  const thumbnail = getYoutubeThumbnail(tip.youtube_url)
   return (
     <Link to={`/tips/${tip.id}`} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden block">
       {status === 'idea' ? (
         <div className="m-1.5 h-16 rounded-lg border border-dashed border-gray-700" />
       ) : (
-        <div className="h-20 bg-gray-800 flex items-center justify-center">
-          <Play className="w-4 h-4 text-gray-200" fill="currentColor" />
+        <div className="h-20 bg-gray-800 flex items-center justify-center relative overflow-hidden">
+          {thumbnail ? (
+            <img src={thumbnail} alt={tip.title} className="w-full h-full object-cover" />
+          ) : null}
+          <Play className={`w-4 h-4 text-gray-200 ${thumbnail ? 'absolute drop-shadow' : ''}`} fill="currentColor" />
         </div>
       )}
       <div className="p-2.5">

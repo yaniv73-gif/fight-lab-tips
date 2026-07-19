@@ -4,15 +4,13 @@ import { ArrowRight } from 'lucide-react'
 import { useTips } from '../hooks/useTips'
 import { attachVideo, addPublication, updateTip, deleteTip } from '../lib/tips'
 import { deriveStatus, STATUS_LABELS } from '../lib/tipStatus'
+import { getYoutubeVideoId } from '../lib/youtube'
 
 const PLATFORMS = ['YouTube', 'Instagram', 'Facebook', 'TikTok']
 
 function toEmbedUrl(url) {
-  const watchMatch = url.match(/[?&]v=([^&]+)/)
-  if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`
-  const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
-  if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`
-  return null
+  const id = getYoutubeVideoId(url)
+  return id ? `https://www.youtube.com/embed/${id}` : null
 }
 
 export default function TipDetailPage() {
