@@ -23,7 +23,7 @@ describe('getYoutubeVideoId', () => {
 
 describe('getYoutubeThumbnail', () => {
   it('builds a thumbnail URL for a recognized link', () => {
-    expect(getYoutubeThumbnail('https://youtu.be/abc123')).toBe('https://img.youtube.com/vi/abc123/mqdefault.jpg')
+    expect(getYoutubeThumbnail('https://youtu.be/abc123')).toBe('https://i.ytimg.com/vi/abc123/mqdefault.jpg')
   })
   it('returns null for an unrecognized link', () => {
     expect(getYoutubeThumbnail('https://example.com/not-youtube')).toBeNull()

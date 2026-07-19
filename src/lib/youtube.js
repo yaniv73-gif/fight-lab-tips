@@ -9,5 +9,5 @@ export function getYoutubeVideoId(url) {
 
 export function getYoutubeThumbnail(url) {
   const id = getYoutubeVideoId(url)
-  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null
+  return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect } from 'vitest'
 import TipCard from './TipCard'
@@ -21,12 +21,20 @@ describe('TipCard', () => {
 
   it('shows a real YouTube thumbnail image when the video URL is recognized', () => {
     renderCard({ id: '5', title: 'קרוס פייס', youtube_url: 'https://youtu.be/abc123', publications: [] })
-    const img = screen.getByAltText('קרוס פייס')
-    expect(img).toHaveAttribute('src', 'https://img.youtube.com/vi/abc123/mqdefault.jpg')
+    const img = screen.getByRole('presentation', { hidden: true })
+    expect(img).toHaveAttribute('src', 'https://i.ytimg.com/vi/abc123/mqdefault.jpg')
+    expect(img).toHaveAttribute('alt', '')
   })
 
   it('falls back to the generic play icon box when the video URL is not a recognized YouTube link', () => {
     renderCard({ id: '6', title: 'לא יוטיוב', youtube_url: 'https://example.com/video', publications: [] })
-    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    expect(screen.queryByRole('presentation', { hidden: true })).not.toBeInTheDocument()
+  })
+
+  it('falls back to the generic play icon if the thumbnail image fails to load', () => {
+    renderCard({ id: '7', title: 'וידאו שנמחק', youtube_url: 'https://youtu.be/deleted123', publications: [] })
+    const img = screen.getByRole('presentation', { hidden: true })
+    fireEvent.error(img)
+    expect(screen.queryByRole('presentation', { hidden: true })).not.toBeInTheDocument()
   })
 })
