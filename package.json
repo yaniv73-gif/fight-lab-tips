@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "icons": "node scripts/generate-icons.mjs",
     "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "gh-pages": "^6.3.0",
     "jsdom": "^25.0.1",
     "oxlint": "^1.69.0",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.3.1",
     "vite": "^8.1.0",
     "vitest": "^2.1.8"
